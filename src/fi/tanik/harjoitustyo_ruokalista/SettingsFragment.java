@@ -1,5 +1,6 @@
 package fi.tanik.harjoitustyo_ruokalista;
 
+import android.app.Activity;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.graphics.Color;
@@ -7,61 +8,52 @@ import android.os.Bundle;
 import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceFragment;
-import android.preference.PreferenceManager;
+
+/*
+ * 	This fragment handles changing of preferences
+ */
 
 public class SettingsFragment extends PreferenceFragment implements OnSharedPreferenceChangeListener {
-	private String DefaultLanguage, DefaultLocation; 
+	private String Language, Location;
+	private ListPreference langp, locp;
+	private Activity activity;
+	private LanguageHandler languageHandler;
 	
-	public SettingsFragment(String Lang, String Loc) {
-
-		if(Lang.equals("fi"))
-			this.DefaultLanguage = "Finnish";
-		else
-			this.DefaultLanguage = "English";
+	public SettingsFragment(Activity activity, String Lang, String Loc) {
+		// Save main activity to fragment
+		this.activity = activity;
 		
-		if(Loc.equals("5865"))	
-			this.DefaultLocation = "Dynamo";
-		else if(Loc.equals("5859"))
-			this.DefaultLocation = "Main Campus";
-		else if(Loc.equals("5861"))
-			this.DefaultLocation = "Rajacafé";
-		else if(Loc.equals("5868"))
-			this.DefaultLocation = "Music Campus";
-		else
-			this.DefaultLocation = "Dynamo";
+		// Start new languageHandler
+		languageHandler = new LanguageHandler(); 
+		
+		// Save language and locations
+		Language = Lang;
+		Location = Loc;	 
 	}
 	
 	@Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        // Load the preferences from an XML resource
         addPreferencesFromResource(R.xml.application_preferences);
         
-        ListPreference langp = (ListPreference)findPreference("Language_preference");
+        activity.setTitle(languageHandler.GetMenuSettingsText(Language));
         
-        CharSequence[] langentries = { "English", "Finnish"};
-        CharSequence[] langentryValues = { "en", "fi"};
-        	
-        langp.setEntries(langentries);
-        langp.setEntryValues(langentryValues);
-        langp.setTitle("Menu Language");
-        langp.setSummary(this.DefaultLanguage);
-        	
-        ListPreference locp = (ListPreference)findPreference("Location_preference");
-        	
-        CharSequence[] locentries = { "Dynamo", "Main Campus", "Rajacafé", "Music Campus"};
-        CharSequence[] locentryValues = { "5865", "5859", "5861", "5868"};
-        	
-        locp.setEntries(locentries);
-        locp.setEntryValues(locentryValues);
-        locp.setTitle("Location");
-        locp.setSummary(this.DefaultLocation);
+        // Init language preference settings
+        langp = (ListPreference)findPreference("Language_preference");
+        langp.setEntryValues(languageHandler.SettingsLanguageValues);
+        languageHandler.SetSettingsLanguageText(langp, Language);
+        
+        // Init location preference settings
+        locp = (ListPreference)findPreference("Location_preference");
+        locp.setEntryValues(languageHandler.SettingsLocationValues);
+    	locp.setSummary(languageHandler.GetLocationText(Location, Language));
+    	languageHandler.SetSettingsLocationText(locp, Language);      
     }
 	
 	@Override
 	public void onStart() {
 		super.onStart();
-		// register preference change listener
+		// Register preference change listener
 		SharedPreferences sharedPreferences = getPreferenceManager().getSharedPreferences();
 		sharedPreferences.registerOnSharedPreferenceChangeListener(this);
 	}
@@ -69,7 +61,7 @@ public class SettingsFragment extends PreferenceFragment implements OnSharedPref
 	@Override
     public void onStop() {
 		super.onStop();
-		// unregister
+		// Unregister preference change listener
         SharedPreferences sharedPreferences = getPreferenceManager().getSharedPreferences();
         sharedPreferences.unregisterOnSharedPreferenceChangeListener(this);
     }
@@ -80,24 +72,35 @@ public class SettingsFragment extends PreferenceFragment implements OnSharedPref
 	    getView().setBackgroundColor(Color.WHITE);
 	}
 
-	// change text or list values in PreferenceActivity ("Screen/Page")
 	@Override
+	// When preference is changed
 	public void onSharedPreferenceChanged(SharedPreferences sharedPref, String key) {
+		
+		// Get changed preference 
 		Preference list = findPreference(key);
 		if(key.equals("Language_preference")) {
-			if(sharedPref.getString(key, "").equals("fi"))
-				list.setSummary("Finnish");
-			else
-				list.setSummary("English");
+			// Save changed language locally
+			if(sharedPref.getString(key, "").equals("fi")) {
+				Language = "fi";	        
+			} else {
+				Language = "en";
+			}
+			
+			// Change settings language
+			activity.setTitle(languageHandler.GetMenuSettingsText(Language));
+			
+			// Change language and location preference texts
+			languageHandler.SetSettingsLanguageText(langp, Language);	        
+			languageHandler.SetSettingsLocationText(locp, Language);
+			
+			// Change location summary text
+			locp.setSummary(languageHandler.GetLocationText(Location, Language));
 		} else {
-			if(sharedPref.getString(key, "").equals("5865"))	
-				list.setSummary("Dynamo");
-			else if(sharedPref.getString(key, "").equals("5859"))
-				list.setSummary("Main Campus");
-			else if(sharedPref.getString(key, "").equals("5861"))
-				list.setSummary("Rajacafé");
-			else if(sharedPref.getString(key, "").equals("5868"))
-				list.setSummary("Music Campus");
+			// Save new location
+			Location = sharedPref.getString(key, "");
+			
+			// Change location summary text
+			list.setSummary(languageHandler.GetLocationText(Location, Language));		
 		}
 	}
 

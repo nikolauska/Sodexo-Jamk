@@ -1,10 +1,7 @@
 package fi.tanik.harjoitustyo_ruokalista;
 
 import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
@@ -12,11 +9,12 @@ import java.util.List;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
+import org.apache.http.NameValuePair;
 import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.params.BasicHttpParams;
 import org.apache.http.params.HttpConnectionParams;
 import org.apache.http.params.HttpParams;
@@ -26,317 +24,303 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.Movie;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.util.AttributeSet;
-import android.view.View;
-import android.webkit.WebSettings.LayoutAlgorithm;
 import android.webkit.WebView;
 import android.widget.ProgressBar;
-import android.widget.TextView;
- 
+
+/*
+ * 	This Activity is for loading screen 
+ * 	
+ *	It will download all needed information from internet
+ * 	and show cool animation :)
+ * 
+ */
+
 public class LoadingScreen extends Activity{
 	
  
-    private Calendar calendar;
-    private String[] LoadingText = {"Etsitään pitsaa", "Pitsaa ei löydetty", "Etsitään kebabbia", "Ei löydetty sitäkään", "Toivotaan jotain muuta hyvää"};
     private ProgressBar progressBar;
-    private ArrayList<String> JsonArrayFI, JsonArrayEN;
-	private ArrayList<List<String>> JsonArrayAllFI;
-	private ArrayList<List<String>> JsonArrayAllEN;
-	private ArrayList<String> Ratings;
-	private String Location;
+	private String Location, Language;
+	
+	private Week week;
+	private CalendarHandler calendar;
+	private UsernameHandler user;
+	private LanguageHandler languageHandler;
 	
 	@Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);     
-        // Show the splash screen
         setContentView(R.layout.activity_loading);
         
+        // Start gif animation
         WebView view = (WebView) findViewById(R.id.loadingView);
-        view.loadUrl("file:///android_asset/loading.gif");
-        view.getSettings().setLayoutAlgorithm(LayoutAlgorithm.SINGLE_COLUMN); 
+        view.loadUrl("file:///android_asset/gif.html");
         
-        // Find the progress bar
+        // Init progress bar 
         progressBar = (ProgressBar) findViewById(R.id.loading_progressBar);
-        // Start your loading
+        
+        // Init Week class to return it to main activity
+        week = new Week();
+        
+        // Get classes that main activity sent here
         Bundle extras = getIntent().getExtras();
-		calendar = Calendar.getInstance();
-		calendar.set(Calendar.DAY_OF_YEAR, extras.getInt("calendar"));
+		calendar = new CalendarHandler((CalendarHandler) extras.getSerializable("calendar"));
+		user = (UsernameHandler) extras.getSerializable("username");
 		
-		JsonArrayAllFI = new ArrayList<List<String>>();
-		JsonArrayAllEN = new ArrayList<List<String>>();
-		JsonArrayFI = new ArrayList<String>();
-		JsonArrayEN = new ArrayList<String>();
-		Ratings = new ArrayList<String>();
-		
+		// Load saved preferences
 		SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
 		Location = sharedPref.getString("Location_preference", "5865");
-		if(Location.equals("5865"))	
-			this.setTitle("Loading menu for Dynamo...");
-		else if(Location.equals("5859"))
-			this.setTitle("Loading menu for Main Campus...");
-		else if(Location.equals("5861"))
-			this.setTitle("Loading menu for Rajacafé...");
-		else if(Location.equals("5868"))
-			this.setTitle("Loading menu for Music Campus...");
+		Language = sharedPref.getString("Language_preference", "en");
+		
+		// Init LanguageHander to set loading screen text 
+		languageHandler = new LanguageHandler();
+		this.setTitle(languageHandler.GetLoadingScreenText(Language));
 
-        new RequestTask().execute(""); // Pass in whatever you need a url is just an example we don't use it in this tutorial
+		// Start loading information from internet on another thread
+        new RequestTask().execute("");
     }
 	
+	// This is used so user cannot exit loadingscreen by pressing back button
+	public void onBackPressed() {}
 	
-	
-	
-	class RequestTask extends AsyncTask<String, Integer, String> {
-		
+	class RequestTask extends AsyncTask<String, Integer, String> {		
 		@Override
-		// username, password, message, mobile
 		protected String doInBackground(String...removeThis) {
-			//gifView = (GifView) findViewById(R.id.gifview);
-		    switch(calendar.get(Calendar.DAY_OF_WEEK)){
+			// Check day that main activity sent us and set it to monday
+		    switch(calendar.getWeekDate()){
 			    case(Calendar.SATURDAY):{
-					calendar.add(Calendar.DAY_OF_YEAR, 2);
+					calendar.AddDay(2);
 					break;
 				}
 			    case(Calendar.SUNDAY):{
-					calendar.add(Calendar.DAY_OF_YEAR, 1);
+			    	calendar.AddDay(1);
 					break;
 				}
 				case(Calendar.TUESDAY):{
-					calendar.add(Calendar.DAY_OF_YEAR, -1);
+					calendar.AddDay(-1);
 					break;
 				}
 				case(Calendar.WEDNESDAY):{
-					calendar.add(Calendar.DAY_OF_YEAR, -2);
+					calendar.AddDay(-2);
 					break;
 				}
 				case(Calendar.THURSDAY):{
-					calendar.add(Calendar.DAY_OF_YEAR, -3);
+					calendar.AddDay(-3);
 					break;
 				}
 				case(Calendar.FRIDAY):{
-					calendar.add(Calendar.DAY_OF_YEAR, -4);
+					calendar.AddDay(-4);
 					break;
 				}
 			}
 		    
-		    int progress = 1;
-		    // Add urls for whole week
+		    // Save week number for later use
+		    week.weekNumber = calendar.week;
+		    
+		    // Loop through whole week to get info of all week days
 		    for(int i=0; i<5; i++){
-				int year = calendar.get(Calendar.YEAR);
-				int month = calendar.get(Calendar.MONTH) + 1;
-				int day = calendar.get(Calendar.DAY_OF_MONTH);
+				int year = calendar.year;
+				int month = calendar.month;
+				int day = calendar.day;
 				
-				AddDayText("http://www.sodexo.fi/ruokalistat/output/daily_json/" + Location + "/" + year + "/" + month + "/" + day +"/fi");
-				progress += 1;
-				publishProgress(progress);								
+				// Starts loading function
+				AddDayText(i, day, month, year);
 				
-				calendar.add(Calendar.DAY_OF_YEAR, 1);
+				// Show user how much is done
+				publishProgress((int) (((i+1) / (float) 5) * 100));							
+				
+				// Switch to next day
+				calendar.AddDay(1);
 	        }
-				
+			
+		    // End backgroundtask and got to post execute
 			return "";
 		}
 		
+		// Update progress to user
 	    protected void onProgressUpdate(Integer... values) {
 	        super.onProgressUpdate(values);
-	        
-	        int progress = (int) ((values[0] / (float) 5) * 100);
-	        progressBar.setProgress(progress); // This is ran on the UI thread so it is ok to update our progress bar ( a UI view ) here        
+	        progressBar.setProgress(values[0]);        
 	    }
 		
-		@Override
-		protected void onPostExecute(String result) {
-			
-			// create a new intent to pass data
-	    	Intent intent = new Intent();
+		@Override 
+		protected void onPostExecute(String result) {	
+			// Save Week class we filled with food info to return it to main activity
+	    	Intent intent = new Intent(); 	
+	    	intent.putExtra("week", week);
 	    	
-	    	// Add arrays to bundle
-	    	Bundle b = new Bundle();
-	    	b.putStringArrayList("MondayFI", (ArrayList<String>) JsonArrayAllFI.get(0));
-	    	b.putStringArrayList("TuesdayFI", (ArrayList<String>) JsonArrayAllFI.get(1));
-	    	b.putStringArrayList("WednesdayFI", (ArrayList<String>) JsonArrayAllFI.get(2));
-	    	b.putStringArrayList("ThursdayFI", (ArrayList<String>) JsonArrayAllFI.get(3));	
-	    	b.putStringArrayList("FridayFI", (ArrayList<String>) JsonArrayAllFI.get(4));
-	    	
-	    	b.putStringArrayList("MondayEN", (ArrayList<String>) JsonArrayAllEN.get(0));
-	    	b.putStringArrayList("TuesdayEN", (ArrayList<String>) JsonArrayAllEN.get(1));	
-	    	b.putStringArrayList("WednesdayEN", (ArrayList<String>) JsonArrayAllEN.get(2));
-	    	b.putStringArrayList("ThursdayEN", (ArrayList<String>) JsonArrayAllEN.get(3));
-	    	b.putStringArrayList("FridayEN", (ArrayList<String>) JsonArrayAllEN.get(4));
-	    	
-	    	// add result to intent
-	    	intent.putExtra("Bundle", b);
-	    			
-	    	// al ok here, result is set
+	    	// Set result to ok to show all went as expected here
 	    	setResult(RESULT_OK ,intent);
 	    	
-	    	finish(); // Don't forget to finish this Splash Activity so the user can't return to it!
+	    	// end activity
+	    	finish();
 		}
 		
-		private String CheckObject(JSONObject object, String key) {
-			String text = "";
-			
-			try {text = object.getString(key);} 
-			catch (JSONException e){text = "";};
-			
-			return text;
-		}
-		
-		private void AddDayText(String URL) {
-			 // constants
+		// Function to load data from internat and handle returning JSON
+		private void AddDayText(int dayNumber, int day, int month, int year) {
 		    int timeoutSocket = 5000;
 		    int timeoutConnection = 5000;
-		    String line = "";
-			String error = "";		    	
+		    String total = "";
+			String error = "";
+			String URL = "http://student.labranet.jamk.fi/~G3217/Android/Harkka/ruoka/index.php";
 			
+			// Classes to save in Week class later on
+			Food foodFi;
+			Food foodEn;
+			
+			// Add HTTP parameters
 		    HttpParams httpParameters = new BasicHttpParams();
 		    HttpConnectionParams.setConnectionTimeout(httpParameters, timeoutConnection);
 		    HttpConnectionParams.setSoTimeout(httpParameters, timeoutSocket);
 		    HttpProtocolParams.setContentCharset(httpParameters, "utf-8");
 		    HttpClient client = new DefaultHttpClient(httpParameters);
-		
-		    HttpGet httpget = new HttpGet(URL);
+
+		    // Add HTTP post with given URL
+		    HttpPost httppost = new HttpPost(URL);
 		
 		    try {
-		        HttpResponse getResponse = client.execute(httpget);
-		        final int statusCode = getResponse.getStatusLine().getStatusCode();
-		
+		    	// Add information to HTTP post request
+		        List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(2);
+		        nameValuePairs.add(new BasicNameValuePair("username", user.Username));
+		        nameValuePairs.add(new BasicNameValuePair("paikka", Location));
+		        nameValuePairs.add(new BasicNameValuePair("day", Integer.toString(day)));
+		        nameValuePairs.add(new BasicNameValuePair("month", Integer.toString(month)));
+		        nameValuePairs.add(new BasicNameValuePair("year", Integer.toString(year)));
+		        httppost.setEntity(new UrlEncodedFormEntity(nameValuePairs));        
+
+		        // Execute HTTP Post Request
+		        HttpResponse response = client.execute(httppost);
+		        
+		        // Get response status
+		        final int statusCode = response.getStatusLine().getStatusCode();
+		        
+		        // If status is not OK then inform user of specific problems
 		        if(statusCode != HttpStatus.SC_OK) {
-		        	JsonArrayFI.add("Yhteysvirhe: " + statusCode + "| URL osoitteelle: " + URL);
-					JsonArrayEN.add("Connection Error: " + statusCode + "| for URL: " + URL);
+		        	foodFi = new Food();
+		        	foodEn = new Food();
+		        	
+		        	foodFi.error = languageHandler.GetErrorLoadingConnectionText("fi");
+		        	foodEn.error = languageHandler.GetErrorLoadingConnectionText("en");
+					
+					week.addFoodtoList(dayNumber, foodFi, foodEn);
 		        	error = "error";		        	
 		        }
-		
 		        
-		        StringBuilder total = new StringBuilder();
-		
-		        HttpEntity getResponseEntity = getResponse.getEntity();
-		
-		        BufferedReader reader = new BufferedReader(new InputStreamReader(getResponseEntity.getContent()));  
-		
-		        while((line = reader.readLine()) != null) {
-		            total.append(line);
-		        }
-		
-		        line = total.toString();
+		        // Get response message 
+		        HttpEntity getResponseEntity = response.getEntity();
+		        BufferedReader reader = new BufferedReader(new InputStreamReader(getResponseEntity.getContent(), "UTF-8"));  
+		        
+		        // Loop through returned message and save it 
+		        StringBuilder builder = new StringBuilder();
+		        String line = "";
+                while ((line = reader.readLine()) != null) {
+                        builder.append(line);
+                }
+		        total = builder.toString();
+		        
+		        // Edit string to remove \r\n and change invalid ä and ö letters from encoding
+		        total = total.replaceAll("(\\\\r\\\\n)", "");
+		        total = total.replaceAll("(\\\\u00e4)", "ä");
+		        total = total.replaceAll("(\\\\u00f6)", "ö");
+		        total = total.substring(1);
+		     
 		    } catch (Exception e) {
-		    	JsonArrayFI.add("Latausvirhe: " + e.toString());
-				JsonArrayEN.add("Download Exception: " + e.toString());
+		    	// Another error message to show user
+		    	foodFi = new Food();
+		    	foodEn = new Food();
+				
+		    	foodFi.error = languageHandler.GetErrorLoadingDownloadText("fi");
+		    	foodEn.error = languageHandler.GetErrorLoadingDownloadText("en");
+				
+				week.addFoodtoList(dayNumber, foodFi, foodEn);
 	        	error = "error";
 	    	}
 		    		    
 		    if(error.equals("")) {
 				try {
-					JSONObject jObject = new JSONObject(line);
-							
-					JSONArray jArray = jObject.getJSONArray("courses");
-					
+					// Change String to JSON Array 
+					JSONArray jArray = new JSONArray(total);
 					if(jArray.length() == 0) {
+						// If JSON array is empty (no menu for that day) throw error
 						throw new JSONException("");
 					} else {
+						// Loop through JSON Array and save information
 						for (int indexloc = 0; indexloc < jArray.length(); indexloc++)
 						{
+							// initialize new Food classes to save information to
+							foodFi = new Food();
+							foodEn = new Food();
 							try {
+								// get one JSON object from JSON array
 								JSONObject oneObject = jArray.getJSONObject(indexloc);
-								// Pulling items from the array
 								
-								String title = CheckObject(oneObject, "title_fi");
-								//String category = CheckObject(oneObject, "category");
-								//String price = CheckObject(oneObject, "price");
-								String properties = CheckObject(oneObject, "properties");				
-								String desc = CheckObject(oneObject, "desc_fi");
-									
-								JsonArrayFI.add(//"Kategoria: " + category + "\n" + 
-											"Nimi: " + title + "\n" + 
-											//"Hinta: " + price + "\n" + 	
-											"Allergiat: " + properties + "\n" +
-								        	"Lisätiedot: " + desc);							
-								        	
-								title = CheckObject(oneObject, "title_en");
-								//category = CheckObject(oneObject, "category");
-								//price = CheckObject(oneObject, "price");
-								properties = CheckObject(oneObject, "properties");				
-								desc = CheckObject(oneObject, "desc_en");
-									
-								JsonArrayEN.add(//"Category: " + category + "\n" + 
-											"Name: " + title + "\n" + 
-											//"Price: " + price + "\n" + 	
-											"Allergies: " + properties + "\n" +
-								        	"Description: " + desc);
+								// Save food ID
+								foodFi.Id = oneObject.getInt("id");
+								foodEn.Id = oneObject.getInt("id");
 								
-								//Kuvitteellinen json
-								//{
-								//	"id":"35135m23b2b52n235nj25",
-								//	"food":[{"name_fi":"Pitsaa", "name_en":"Pizza"},
-								//			{"name_fi":"Kebabbia", "name_en":"kebab"}]
-								//}
-								// Ratings.add(GetRating("URL", JSON));
-							} catch (JSONException e) {								
-								JsonArrayFI.add("JsonArray virhe: " + e.toString());
-								JsonArrayEN.add("JsonArray Exception: " + e.toString());
+								// Save food name
+								foodFi.foodName = oneObject.getString("nimi");
+								foodEn.foodName = oneObject.getString("nimien");
+								
+								// Save additional info
+								foodFi.additionalInfo = oneObject.getString("lisa");
+								foodEn.additionalInfo = oneObject.getString("lisan");
+								
+								// Save category
+								foodFi.category = oneObject.getString("kategoria");
+								foodEn.category = oneObject.getString("kategoria");
+								
+								// Save allergies and edit their text to full text compared to couple characters
+								foodFi.allergies = oneObject.getString("aller");
+								foodFi.allergies = foodFi.allergies.replaceAll("\\bVL\\b", languageHandler.GetAllergieSmallLactoseText("fi"));
+								foodFi.allergies = foodFi.allergies.replaceAll("\\bL\\b", languageHandler.GetAllergieLactoseText("fi"));
+								foodFi.allergies = foodFi.allergies.replaceAll("\\bG\\b", languageHandler.GetAllergieGlutenText("fi"));							
+								foodFi.allergies = foodFi.allergies.replaceAll("\\bM\\b", languageHandler.GetAllergieNoMilkText("fi"));
+								
+								foodEn.allergies = oneObject.getString("aller");
+								foodEn.allergies = foodEn.allergies.replaceAll("\\bVL\\b", languageHandler.GetAllergieSmallLactoseText("en"));
+								foodEn.allergies = foodEn.allergies.replaceAll("\\bL\\b", languageHandler.GetAllergieLactoseText("en"));
+								foodEn.allergies = foodEn.allergies.replaceAll("\\bG\\b", languageHandler.GetAllergieGlutenText("en"));
+								foodEn.allergies = foodEn.allergies.replaceAll("\\bM\\b", languageHandler.GetAllergieNoMilkText("en"));
+								
+								// Get food rating
+								foodFi.reviewScore = oneObject.getInt("arvo");
+								foodEn.reviewScore = oneObject.getInt("arvo");
+								
+								// Get rating user has given
+								foodFi.userScore = oneObject.getInt("userarvo");
+								foodEn.userScore = oneObject.getInt("userarvo");
+								
+								// Save save foods to Week Class
+								week.addFoodtoList(dayNumber, foodFi, foodEn);	
+								
+							} catch (JSONException e) {
+								// JSON error
+								foodFi = new Food();
+								foodEn = new Food();
+								
+								foodFi.error = languageHandler.GetErrorLoadingJSONArrayText("fi");
+								foodEn.error = languageHandler.GetErrorLoadingJSONArrayText("en");
+								
+								week.addFoodtoList(dayNumber, foodFi, foodEn);
 							}
 						}
 					}
 				} catch (JSONException e) {
-					JsonArrayFI.add("Ruokalistaa ei löydetty hakemallesi päivälle!");
-					JsonArrayEN.add("Menu not found for this specific day!");
+					// Given if there is no menu for day user wanted
+					foodFi = new Food();
+					foodEn = new Food();
+					
+					foodFi.error = languageHandler.GetErrorLoadingNoMenuText("fi");
+					foodEn.error = languageHandler.GetErrorLoadingNoMenuText("en");
+					
+					week.addFoodtoList(dayNumber, foodFi, foodEn);
 				} 		            
 		    }
-		      
-		    JsonArrayAllFI.add(JsonArrayFI);
-		    JsonArrayAllEN.add(JsonArrayEN);
-		    //JsonArrayAll.add(Ratings);
-		    JsonArrayFI = new ArrayList<String>();
-		    JsonArrayEN = new ArrayList<String>();
-		    Ratings = new ArrayList<String>();
-		}
-		
-		private String GetRating(String URL, JSONObject json) {
-			try {
-				 
-				DefaultHttpClient httpClient = new DefaultHttpClient();
-				HttpPost postRequest = new HttpPost("http://localhost:8080/RESTfulExample/json/product/post");
-				
-				if(CheckObject(json, "id").equals("")) {return "Rating JSON Error: ID is empty!";} // person hashed email
-				if(CheckObject(json, "food").equals("")) {return "Rating JSON Error: food is empty";} // Food name
-				StringEntity input = new StringEntity(json.toString());
-				input.setContentType("application/json");
-				postRequest.setEntity(input);
-		 
-				HttpResponse response = httpClient.execute(postRequest);
-		 
-				if (response.getStatusLine().getStatusCode() != 201) {
-					throw new RuntimeException("Failed : HTTP error code : "
-						+ response.getStatusLine().getStatusCode());
-				}
-		 
-				BufferedReader br = new BufferedReader(
-		                        new InputStreamReader((response.getEntity().getContent())));
-		 
-				String output;
-				System.out.println("Output from Server .... \n");
-				while ((output = br.readLine()) != null) {
-					System.out.println(output);
-				}
-		 
-				httpClient.getConnectionManager().shutdown();
-		 
-			  } catch (MalformedURLException e) {
-		 
-				e.printStackTrace();
-		 
-			  } catch (IOException e) {
-		 
-				e.printStackTrace();
-			  }
-			return "";
-		}
+		}		
 	}
 }
