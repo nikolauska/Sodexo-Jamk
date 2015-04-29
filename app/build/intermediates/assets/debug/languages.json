@@ -1,0 +1,146 @@
+{  
+   "language_id":[  
+      "en",
+      "fi"
+   ],
+   "language_long":[  
+      [  
+         "English",
+         "Finnish"
+      ],
+      [  
+         "Englanti",
+         "Suomi"
+      ]
+   ],
+   "weekday_monday":[  
+      "Monday",
+      "Maanantai"
+   ],
+   "weekday_tuesday":[  
+      "Tuesday",
+      "Tiistai"
+   ],
+   "weekday_wednesday":[  
+      "Wednesday",
+      "Keskiviikko"
+   ],
+   "weekday_thursday":[  
+      "Thursday",
+      "Torstai"
+   ],
+   "weekday_friday":[  
+      "Friday",
+      "Perjantai"
+   ],
+   "week_name":[  
+      "Week",
+      "Viikko"
+   ],
+   "error_ratingValueSelfZero":[  
+      "ERROR: Score cannot be 0!",
+      "VIRHE: Arvosana ei voi olla 0!"
+   ],
+   "error_connection":[  
+      "ERROR: Unable to connect to internet! Please check your connection!",
+      "VIRHE: Internetyhteyttä ei voitu muodostaa! Ole hyvä ja tarkista yhteytesi!"
+   ],
+   "error_download":[  
+      "ERROR: Response message could not be downloaded!",
+      "VIRHE: Vastausviestiä ei voitu ladata!"
+   ],
+   "error_jsonArray":[  
+      "ERROR: JSON Array could not be handled!",
+      "VIRHE: JSON Arrayta ei pystytty käsittelemään!"
+   ],
+   "error_menuNotFound":[  
+      "ERROR: Menu not found for this specific day!",
+      "VIRHE: Ruokalistaa ei löydetty tälle päivälle!"
+   ],
+   "rating_buttonRate":[  
+      "Rate",
+      "Arvostele"
+   ],
+   "rating_succeed":[  
+      "Voting succeeded!",
+      "Äänestäminen onnistui!"
+   ],
+   "rating_alreadyVoted":[  
+      "You have already voted today!",
+      "Olet jo äänestänyt tänään!"
+   ],
+   "loading_menuText":[  
+      "Loading menu...",
+      "Ladataan ruokalistaa..."
+   ],
+   "allergies_lactose":[  
+      "Lactose Free",
+      "Laktoositon"
+   ],
+   "allergies_gluten":[  
+      "Gluten Free",
+      "Gluteeniton"
+   ],
+   "allergies_smallLactose":[  
+      "Low-lactose",
+      "Vähälaktoosinen"
+   ],
+   "allergies_noMilk":[  
+      "No Milk",
+      "Maidoton"
+   ],
+   "review_text":[  
+      "Grade",
+      "Arvosana"
+   ],
+   "review_textSelf":[  
+      "Rate Food",
+      "Arvostele Ruoka"
+   ],
+   "review_textSelfGiven":[  
+      "Your Score",
+      "Sinun Arvostelu"
+   ],
+   "menu_settings":[  
+      "Settings",
+      "Asetukset"
+   ],
+   "menu_returnToday":[  
+      "Return Today",
+      "Palaa Nykypäivään"
+   ],
+   "settings_locations":[  
+      [  
+         "Dynamo",
+         "Dynamo"
+      ],
+      [  
+         "Main Campus",
+         "Pääkampus"
+      ],
+      [  
+         "Rajacafe",
+         "Rajacafe"
+      ],
+      [  
+         "Music Campus",
+         "Musiikkikampus"
+      ]
+   ],
+   "food_name":[  
+      "Food",
+      "Ruoka"
+   ],
+   "food_category":[  
+      "Category",
+      "Kategoria"
+   ],
+   "food_allergy":[  
+      "Allergies",
+      "Allergiat"
+   ],
+   "food_info":[  
+      "Additional",
+      "Lisätiedot"
+   ]
+}

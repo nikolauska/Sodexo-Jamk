@@ -1,180 +1,201 @@
 package fi.tanik.harjoitustyo_ruokalista;
 
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.content.res.AssetManager;
 import android.preference.ListPreference;
+import android.preference.PreferenceManager;
+import android.view.ContextMenu;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
 
 /*
- * 	This class handles all language related, making 
- * 	it easier to add more languages if needed.	
+ * 	This class handles languages from languages.json file (WIP)
  */
 
 public class LanguageHandler {
-	
+    private JSONObject json = null;
+    private int langID = 0;
+    private String Language = "";
+    private Context context;
+
+    public LanguageHandler(Context context) {
+        this.context = context;
+
+        // Load saved language id
+        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(context);
+        Language = sharedPref.getString("Language_preference", "en");
+
+        // Load json text here
+        try {
+            AssetManager assetManager = context.getAssets();
+            InputStream is = assetManager.open("languages.json");
+
+            int size = is.available();
+
+            byte[] buffer = new byte[size];
+
+            is.read(buffer);
+
+            is.close();
+            String j = new String(buffer, "UTF-8");
+            json = new JSONObject(j);
+
+            JSONArray languageID = json.getJSONArray("language_id");
+            for(int index = 0; index < languageID.length(); index++) {
+                if(languageID.getString(index).equals(Language)) {
+                    langID = index;
+                }
+            }
+        } catch (IOException ex) {
+            // File not found
+            ex.printStackTrace();
+        } catch (JSONException e) {
+            // JSON loading error
+            e.printStackTrace();
+        }
+    }
+
+    private String getLanguageText(String array) {
+        String returnText = "";
+
+        // Load saved language id
+        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(context);
+        String lang = sharedPref.getString("Language_preference", "en");
+
+        if(!Language.equals(lang)) {
+            ChangeLanguage(lang);
+        }
+
+        try {
+            if(json != null) {
+                JSONArray jArray = json.getJSONArray(array);
+                returnText = jArray.getString(langID);
+            }
+        } catch (JSONException e) {
+            // JSON loading error
+            e.printStackTrace();
+        }
+
+        return returnText;
+    }
+
+    private void ChangeLanguage(String lang) {
+        Language = lang;
+
+        try {
+            if(json != null) {
+                JSONArray languageID = json.getJSONArray("language_id");
+                for(int index = 0; index < languageID.length(); index++) {
+                    if(languageID.getString(index).equals(lang)) {
+                        langID = index;
+                    }
+                }
+            }
+        } catch (JSONException e) {
+            // JSON loading error
+            e.printStackTrace();
+        }
+    }
+
 	/**************************************************************************/
-	
-	// error
-	private String[] SelfRatingValueError = {"Arvosana ei voi olla 0", "Score cannot be 0"};
-	private String[] LoadingConnectionError = {"Yhteyttä internettiin ei voitu muodostaa", "Unable to connect to internet"};
-	private String[] LoadingDownloadError = {"Vastausviestiä ei voitu ladata", "Response message could not be downloaded"};
-	private String[] LoadingJSONArrayError = {"JSON Arrayta ei pystytty käsittelemään", "JSON Array could not be handled"};
-	private String[] LoadingNoMenuError = {"Ruokalistaa ei löydetty tälle päivälle", "Menu not found for this specific day"};
-	
+	// errors
+    /**************************************************************************/
 	public String GetErrorSelfRatingValueText(String language) {
-		if(language.equals("fi"))
-			return SelfRatingValueError[0];				
-		else 
-			return SelfRatingValueError[1];
+        return getLanguageText("error_ratingValueSelfZero");
 	}
 	
 	public String GetErrorLoadingConnectionText(String language) {
-		if(language.equals("fi"))
-			return LoadingConnectionError[0];				
-		else 
-			return LoadingConnectionError[1];
+        return getLanguageText("error_connection");
 	}
 	
 	public String GetErrorLoadingDownloadText(String language) {
-		if(language.equals("fi"))
-			return LoadingDownloadError[0];				
-		else 
-			return LoadingDownloadError[1];
+        return getLanguageText("error_download");
 	}
 	
 	public String GetErrorLoadingJSONArrayText(String language) {
-		if(language.equals("fi"))
-			return LoadingJSONArrayError[0];				
-		else 
-			return LoadingJSONArrayError[1];
+        return getLanguageText("error_jsonArray");
 	}
 	
 	public String GetErrorLoadingNoMenuText(String language) {
-		if(language.equals("fi"))
-			return LoadingNoMenuError[0];				
-		else 
-			return LoadingNoMenuError[1];
+        return getLanguageText("error_menuNotFound");
 	}
 	
 	/**************************************************************************/
-	
-	// Rating post messages
-	private String[] RatingPostConnectionError = {"Yhteyttä internettiin ei voitu muodostaa", "Unable to connect to internet"};
-	private String[] RatingPostSucceeded = {"äänestys onnistui", "Voting succeeded"};
-	private String[] RatingPostAlreadyVoted = {"Olet jo äänestänyt", "You have already voted"};
-	
+	// Rating
+    /**************************************************************************/
 	public String GetRatingPostConnectionErrorText(String language) {
-		if(language.equals("fi"))
-			return RatingPostConnectionError[0];				
-		else 
-			return RatingPostConnectionError[1];
+        return getLanguageText("error_connection");
 	}
 	
 	public String GetRatingPostSucceededText(String language) {
-		if(language.equals("fi"))
-			return RatingPostSucceeded[0];				
-		else 
-			return RatingPostSucceeded[1];
+        return getLanguageText("rating_succeed");
 	}
 	
 	public String GetRatingPostAlreadyVotedText(String language) {
-		if(language.equals("fi"))
-			return RatingPostAlreadyVoted[0];				
-		else 
-			return RatingPostAlreadyVoted[1];
+        return getLanguageText("rating_alreadyVoted");
 	}
+
+    public String getRateButtonText() {
+        return getLanguageText("rating_buttonRate");
+    }
 		
 	/**************************************************************************/
-	
 	// Loading screen
-	private String[] LoadingScreen = {"Ladataan ruokalistaa...", "Loading menu..."};
-	
+    /**************************************************************************/
 	public String GetLoadingScreenText(String language) {
-		if(language.equals("fi"))
-			return LoadingScreen[0];				
-		else 
-			return LoadingScreen[1];
+        return getLanguageText("loading_menuText");
 	}
 	
 	/**************************************************************************/
-	
 	// Allergies
-	private String[] lactose = {"Laktoositon", "Lactose Free"};
-	private String[] Gluten = {"Gluteeniton", "Gluten Free"};
-	private String[] SmallLactose = {"Vähälaktoosinen", "Low-lactose"};
-	private String[] NoMilk = {"Maidoton", "No Milk"};
-	
+    /**************************************************************************/
 	public String GetAllergieLactoseText(String language) {
-		if(language.equals("fi"))
-			return lactose[0];				
-		else 
-			return lactose[1];
+        return getLanguageText("allergies_lactose");
 	}
 	
 	public String GetAllergieGlutenText(String language) {
-		if(language.equals("fi"))
-			return Gluten[0];				
-		else 
-			return Gluten[1];
+        return getLanguageText("allergies_gluten");
 	}
 	
 	public String GetAllergieSmallLactoseText(String language) {
-		if(language.equals("fi"))
-			return SmallLactose[0];				
-		else 
-			return SmallLactose[1];
+        return getLanguageText("allergies_smallLactose");
 	}
 	
 	public String GetAllergieNoMilkText(String language) {
-		if(language.equals("fi"))
-			return NoMilk[0];				
-		else 
-			return NoMilk[1];
+        return getLanguageText("allergies_noMilk");
 	}
 	
 	/**************************************************************************/
-	
-	// Review text 
-	private String[] Review = {"Arvosana", "Score"};
-	private String[] ReviewSelf = {"Arvostele Ruoka", "Rate Food"};
-	private String[] ReviewSelfGiven = {"Sinun Arvostelu", "Your Score"};
-	
-	public String GetReviewText(String language) {
-		if(language.equals("fi"))
-			return Review[0];				
-		else 
-			return Review[1];
+	// Review text
+    /**************************************************************************/
+    public String GetReviewText(String language) {
+        return getLanguageText("review_text");
 	}
 	
 	public String GetReviewSelfText(String language) {
-		if(language.equals("fi"))
-			return ReviewSelf[0];				
-		else 
-			return ReviewSelf[1];
+        return getLanguageText("review_textSelf");
 	}
 	
 	public String GetReviewSelfGivenText(String language) {
-		if(language.equals("fi"))
-			return ReviewSelfGiven[0];				
-		else 
-			return ReviewSelfGiven[1];
+        return getLanguageText("review_textSelfGiven");
 	}
 	
 	/**************************************************************************/
-	
 	// Menu items
-	private String[] Settings = {"Asetukset", "Settings"};
-	private String[] ReturnToday = {"Palaa nykypäivään", "Return today"};
-	
+    /**************************************************************************/
 	public String GetMenuSettingsText(String language) {
-		if(language.equals("fi"))
-			return Settings[0];				
-		else 
-			return Settings[1];
+        return getLanguageText("menu_settings");
 	}
 	
 	public String GetMenuReturnTodayText(String language) {
-		if(language.equals("fi"))
-			return ReturnToday[0];				
-		else 
-			return ReturnToday[1];
+        return getLanguageText("menu_returnToday");
 	}
 	
 	/**************************************************************************/
@@ -215,25 +236,21 @@ public class LanguageHandler {
 	
 	/**************************************************************************/
 	
-	// Food info text
-	private String[] FoodName = {"Ruoka", "Food"};
-	private String[] Category = {"Kategoria", "Category"};
-	private String[] Allergy = {"Allergiat", "Allergies"};
-	private String[] Additional = {"Lisätiedot", "Additional"};
-	
 	public String GetFoodInfoText(Food day, String language) {
 		String dayText = "";
-		if(language.equals("fi")) {			
-			dayText += FoodName[0] + ": " + day.foodName + "\n";
-			dayText += Category[0] + ": " + day.category + "\n";
-			dayText += Allergy[0] + ": " + day.allergies + "\n";
-			dayText += Additional[0] + ": " + day.additionalInfo + "\n";
-		} else {		
-			dayText += FoodName[1] + ": " + day.foodName + "\n";
-			dayText += Category[1] + ": " + day.category + "\n";
-			dayText += Allergy[1] + ": " + day.allergies + "\n";
-			dayText += Additional[1] + ": " + day.additionalInfo + "\n";
-		}
+
+        // Replace allergies text with long name
+        String editedAllergies = day.allergies;
+        editedAllergies = editedAllergies.replaceAll("\\bVL\\b", GetAllergieSmallLactoseText("fi"));
+        editedAllergies = editedAllergies.replaceAll("\\bL\\b", GetAllergieLactoseText("fi"));
+        editedAllergies = editedAllergies.replaceAll("\\bG\\b", GetAllergieGlutenText("fi"));
+        editedAllergies = editedAllergies.replaceAll("\\bM\\b", GetAllergieNoMilkText("fi"));
+
+		dayText += getLanguageText("food_name") + ": " + day.foodName + "\n";
+		dayText += getLanguageText("food_category") + ": " + day.category + "\n";
+		dayText += getLanguageText("food_allergy") + ": " + editedAllergies + "\n";
+		dayText += getLanguageText("food_info") + ": " + day.additionalInfo + "\n";
+
 		return dayText;
 	}
 	

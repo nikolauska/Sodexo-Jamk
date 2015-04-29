@@ -5,23 +5,16 @@ import java.util.ArrayList;
 
 /*
  * 	This class holds information of all foods for one week
+ *
+ * 	NOTE: We only have english and finnish language here as sodexo currently
+ * 	        doesn't support any other languages
  */
 
 public class Week  implements Serializable {	
 	private static final long serialVersionUID = -2892922306031408581L;
 	/***/
-	public ArrayList<Food> MondayFi;
-	public ArrayList<Food> TuesdayFi;
-	public ArrayList<Food> WednesdayFi;
-	public ArrayList<Food> ThursdayFi;
-	public ArrayList<Food> FridayFi;
-	
-	public ArrayList<Food> MondayEn;
-	public ArrayList<Food> TuesdayEn;
-	public ArrayList<Food> WednesdayEn;
-	public ArrayList<Food> ThursdayEn;
-	public ArrayList<Food> FridayEn;
-	
+	public ArrayList<Food> MondayFi, TuesdayFi, WednesdayFi, ThursdayFi, FridayFi;
+    public ArrayList<Food> MondayEn, TuesdayEn, WednesdayEn, ThursdayEn, FridayEn;
 	public int weekNumber;
 	
 	public Week() {

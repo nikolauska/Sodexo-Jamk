@@ -24,7 +24,7 @@ public class SettingsFragment extends PreferenceFragment implements OnSharedPref
 		this.activity = activity;
 		
 		// Start new languageHandler
-		languageHandler = new LanguageHandler(); 
+		languageHandler = new LanguageHandler(activity.getApplicationContext());
 		
 		// Save language and locations
 		Language = Lang;

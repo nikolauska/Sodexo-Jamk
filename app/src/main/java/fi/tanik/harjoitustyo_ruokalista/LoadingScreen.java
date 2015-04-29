@@ -77,7 +77,7 @@ public class LoadingScreen extends Activity{
 		Language = sharedPref.getString("Language_preference", "en");
 		
 		// Init LanguageHander to set loading screen text 
-		languageHandler = new LanguageHandler();
+		languageHandler = new LanguageHandler(this);
 		this.setTitle(languageHandler.GetLoadingScreenText(Language));
 
 		// Start loading information from internet on another thread
@@ -222,10 +222,10 @@ public class LoadingScreen extends Activity{
                 }
 		        total = builder.toString();
 		        
-		        // Edit string to remove \r\n and change invalid ä and ö letters from encoding
+		        // Edit string to remove \r\n and change invalid Ã¤ and Ã¶ letters from encoding
 		        total = total.replaceAll("(\\\\r\\\\n)", "");
-		        total = total.replaceAll("(\\\\u00e4)", "ä");
-		        total = total.replaceAll("(\\\\u00f6)", "ö");
+		        total = total.replaceAll("(\\\\u00e4)", "Ã¤");
+		        total = total.replaceAll("(\\\\u00f6)", "Ã¶");
 		        total = total.substring(1);
 		     
 		    } catch (Exception e) {
@@ -276,16 +276,16 @@ public class LoadingScreen extends Activity{
 								
 								// Save allergies and edit their text to full text compared to couple characters
 								foodFi.allergies = oneObject.getString("aller");
-								foodFi.allergies = foodFi.allergies.replaceAll("\\bVL\\b", languageHandler.GetAllergieSmallLactoseText("fi"));
-								foodFi.allergies = foodFi.allergies.replaceAll("\\bL\\b", languageHandler.GetAllergieLactoseText("fi"));
-								foodFi.allergies = foodFi.allergies.replaceAll("\\bG\\b", languageHandler.GetAllergieGlutenText("fi"));							
-								foodFi.allergies = foodFi.allergies.replaceAll("\\bM\\b", languageHandler.GetAllergieNoMilkText("fi"));
+								//foodFi.allergies = foodFi.allergies.replaceAll("\\bVL\\b", languageHandler.GetAllergieSmallLactoseText("fi"));
+                                //foodFi.allergies = foodFi.allergies.replaceAll("\\bL\\b", languageHandler.GetAllergieLactoseText("fi"));
+                                //foodFi.allergies = foodFi.allergies.replaceAll("\\bG\\b", languageHandler.GetAllergieGlutenText("fi"));
+                                //foodFi.allergies = foodFi.allergies.replaceAll("\\bM\\b", languageHandler.GetAllergieNoMilkText("fi"));
 								
 								foodEn.allergies = oneObject.getString("aller");
-								foodEn.allergies = foodEn.allergies.replaceAll("\\bVL\\b", languageHandler.GetAllergieSmallLactoseText("en"));
-								foodEn.allergies = foodEn.allergies.replaceAll("\\bL\\b", languageHandler.GetAllergieLactoseText("en"));
-								foodEn.allergies = foodEn.allergies.replaceAll("\\bG\\b", languageHandler.GetAllergieGlutenText("en"));
-								foodEn.allergies = foodEn.allergies.replaceAll("\\bM\\b", languageHandler.GetAllergieNoMilkText("en"));
+                                //foodEn.allergies = foodEn.allergies.replaceAll("\\bVL\\b", languageHandler.GetAllergieSmallLactoseText("en"));
+                                //foodEn.allergies = foodEn.allergies.replaceAll("\\bL\\b", languageHandler.GetAllergieLactoseText("en"));
+                                //foodEn.allergies = foodEn.allergies.replaceAll("\\bG\\b", languageHandler.GetAllergieGlutenText("en"));
+                                //foodEn.allergies = foodEn.allergies.replaceAll("\\bM\\b", languageHandler.GetAllergieNoMilkText("en"));
 								
 								// Get food rating
 								foodFi.reviewScore = oneObject.getInt("arvo");

@@ -18,6 +18,7 @@ import org.apache.http.message.BasicNameValuePair;
 
 
 import android.app.Activity;
+import android.app.Application;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
@@ -44,11 +45,11 @@ import android.widget.Toast;
  */
 
 public class MainActivity extends Activity  implements OnItemSelectedListener{
-	
+
 	// Class variables
 	private CalendarHandler calendar = new CalendarHandler();
-	private LanguageHandler languageHandler = new LanguageHandler();
-	private Week currentWeek = new Week();
+    private LanguageHandler languageHandler;
+    private Week currentWeek = new Week();
 	private Food SelectedFood = new Food();
 	private UsernameHandler user;
 	
@@ -79,7 +80,9 @@ public class MainActivity extends Activity  implements OnItemSelectedListener{
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
-		
+
+
+
 		// Init username for later use
 		user = new UsernameHandler(this);
 		
@@ -125,12 +128,14 @@ public class MainActivity extends Activity  implements OnItemSelectedListener{
 		SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
 		Language = sharedPref.getString("Language_preference", "en");
 		Location = sharedPref.getString("Location_preference", "5865");
+
+        languageHandler = new LanguageHandler(this);
 		
 		// Set app title text to location
 		this.setTitle(languageHandler.GetLocationText(Location, Language));
 		
 		// Set rate button text
-		btnSubmit.setText(languageHandler.GetButtonText(Language));
+		btnSubmit.setText(languageHandler.getRateButtonText());
 		
 		// Start loading
 		LoadingScreen();
