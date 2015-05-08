@@ -62,7 +62,7 @@ public class LanguageHandler {
         }
     }
 
-    private String getLanguageText(String array) {
+    private String getLanguageText(String text) {
         String returnText = "";
 
         // Load saved language id
@@ -73,14 +73,31 @@ public class LanguageHandler {
             ChangeLanguage(lang);
         }
 
+        // Get JSONObject and return empty if failed
+        JSONObject jObject;
         try {
-            if(json != null) {
-                JSONArray jArray = json.getJSONArray(array);
-                returnText = jArray.getString(langID);
-            }
+            jObject = json.getJSONObject(text);
         } catch (JSONException e) {
             // JSON loading error
             e.printStackTrace();
+
+            return "";
+        }
+
+        // Try to get text in defined language
+        try {
+            returnText = jObject.getString(Language);
+        } catch (JSONException e) {
+            // JSON loading error
+            e.printStackTrace();
+
+            // Try to get text in english
+            try {
+                returnText = jObject.getString("en");
+            } catch (JSONException r) {
+                // JSON loading error
+                r.printStackTrace();
+            }
         }
 
         return returnText;
